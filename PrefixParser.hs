@@ -114,20 +114,23 @@ matchFuncTerm = do
 matchVar :: Parser Variable
 matchVar = do
 	char '?'
-	x <- many1 alphaNum
+	x <- many1 nameChars
 	return $ variable x
 	
 matchFuncConst :: Parser FunctionConst
 matchFuncConst = do
-	x <- many1 alphaNum
+	x <- many1 nameChars
 	return $ functionConst x
 	
 matchRelConst :: Parser RelationConst
 matchRelConst = do
-	x <- many1 alphaNum
+	x <- many1 nameChars
 	return $ relationConst x
 
 matchObjConst :: Parser ObjectConst
 matchObjConst = do
-	x <- many1 alphaNum
+	x <- many1 nameChars
 	return $ objectConst x
+	
+nameChars :: Parser Char
+nameChars = oneOf "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_"
