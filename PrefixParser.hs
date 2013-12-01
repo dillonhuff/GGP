@@ -1,18 +1,24 @@
 module PrefixParser(readGameDescription) where
 
 import Text.ParserCombinators.Parsec
-import System.Environment
 import Control.Monad
 import Representation
+import System.IO
 
-readGameDescription :: String -> String
-readGameDescription input = case parse matchGameDescription "prefix GDL parser" input of
-     Left err -> "No match: " ++ show err
-     Right _ -> "Found value"
+readGameDescriptionFromFile :: String -> IO GameDescription
+readGameDescriptionFromFile fileName = do
+	handle <- openFile fileName ReadMode
+	contents <- hGetContents handle
+	return $ readGameDescription contents
+
+readGameDescription :: String -> GameDescription
+readGameDescription input = case parse matchGameDescription "prefix GDL parser" (unlines (filter (\line -> ((length line) > 0) && (head line) /= ';') (lines input))) of
+     Left err -> error $ show err
+     Right description -> description
 
 matchGameDescription :: Parser GameDescription
 matchGameDescription = do
-	expressions <- spaces >> sepBy matchExpression spaces
+	expressions <- spaces >> endBy matchExpression spaces
 	return $ gameDescription expressions
 
 --Parser for expressions
@@ -33,7 +39,7 @@ matchRuleExpr = do
 matchRule :: Parser Rule
 matchRule = do
 	head <- char '(' >> spaces >> string "<=" >> spaces >> matchAtom
-	subgoals <- spaces >> sepBy matchLiteral spaces
+	subgoals <- spaces >> endBy matchLiteral spaces
 	spaces >> char ')'
 	return $ rule head subgoals
 
@@ -57,21 +63,32 @@ matchNegation = do
 	a <- matchAtom
 	spaces >> char ')'
 	return $ negation a
-
+	
 matchAtom :: Parser Atom
-matchAtom = do
+matchAtom = do try matchHighArityAtom <|> matchArityZeroAtom
+
+--Match an atom with arity greater than or equal to 1
+matchHighArityAtom :: Parser Atom
+matchHighArityAtom = do
 	head <- char '(' >> spaces >> matchRelConst
 	spaces
-	terms <- sepBy matchTerm spaces
+	terms <- endBy matchTerm spaces
 	spaces >> char ')'
 	return $ atom head terms
 
+--Match an atom whose relation constant has arity 0
+matchArityZeroAtom :: Parser Atom
+matchArityZeroAtom = do
+	head <- spaces >> matchRelConst
+	spaces
+	return $ atom head []
+	
 --Parser for functional terms
 matchFunctionalTerm :: Parser FunctionalTerm
 matchFunctionalTerm = do
 	head <- char '(' >> spaces >> matchFuncConst
 	spaces
-	terms <- sepBy matchTerm spaces
+	terms <- endBy matchTerm spaces
 	spaces >> char ')'
 	return $ functionalTerm head terms
 	
