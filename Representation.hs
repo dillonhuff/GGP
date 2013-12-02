@@ -114,3 +114,15 @@ data Variable = Var String deriving Show
 variable :: String -> Variable
 variable name = Var name
 
+--Functions for decomposing larger components into smaller pieces
+expressionToAtoms :: Expression -> [Atom]
+expressionToAtoms (AExpr a) = [a]
+expressionToAtoms (RExpr r) = ruleToAtoms r
+
+ruleToAtoms :: Rule -> [Atom]
+ruleToAtoms (R head subgoals) = head:(map literalToAtom subgoals)
+
+literalToAtom :: Literal -> Atom
+literalToAtom (ALit a) = a
+literalToAtom (NLit (Neg a)) = a
+

@@ -12,7 +12,9 @@ readGameDescriptionFromFile fileName = do
 	return $ readGameDescription contents
 
 readGameDescription :: String -> GameDescription
-readGameDescription input = case parse matchGameDescription "prefix GDL parser" (unlines (filter (\line -> ((length line) > 0) && (head line) /= ';') (lines input))) of
+readGameDescription input = case parse matchGameDescription 
+	"prefix GDL parser"
+	(unlines (filter (\line -> ((length line) > 0) && (head line) /= ';') (lines input))) of
      Left err -> error $ show err
      Right description -> description
 
